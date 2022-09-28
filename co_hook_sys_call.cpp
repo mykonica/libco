@@ -152,11 +152,7 @@ static pthread_rwlock_unlock_pfn_t g_sys_pthread_rwlock_unlock_func
 
 static inline unsigned long long get_tick_count()
 {
-	uint32_t lo, hi;
-	__asm__ __volatile__ (
-			"rdtscp" : "=a"(lo), "=d"(hi)
-			);
-	return ((unsigned long long)lo) | (((unsigned long long)hi) << 32);
+    return __builtin_readcyclecounter();
 }
 
 struct rpchook_connagent_head_t
@@ -939,7 +935,8 @@ int gethostbyname_r(const char* __restrict name,
   HOOK_SYS_FUNC(gethostbyname_r);
 
 #if defined( __APPLE__ ) || defined( __FreeBSD__ )
-	return g_sys_gethostbyname_r_func( name );
+    return g_sys_gethostbyname_r_func(name, __result_buf, __buf, __buflen,
+                                      __result, __h_errnop);
 #else
   if (!co_is_enable_sys_hook()) {
     return g_sys_gethostbyname_r_func(name, __result_buf, __buf, __buflen,
